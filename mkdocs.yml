@@ -7,6 +7,10 @@ repo_name: nguyenhuuca/agentic-sdlc
 edit_uri: edit/main/docs/
 copyright: MIT License
 
+# docs and payload are written for GitHub (2-space nested lists, no blank line before a list); see the hook
+hooks:
+  - scripts/mkdocs_hooks.py
+
 theme:
   name: material
   icon:

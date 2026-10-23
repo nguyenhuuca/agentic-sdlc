@@ -5,3 +5,4 @@ scratchpad/
 *.sdlc-new
 docs/reference/
 site/
+__pycache__/

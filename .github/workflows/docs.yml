@@ -10,11 +10,15 @@ on:
       - 'mkdocs.yml'
       - 'CHANGELOG.md'
       - 'scripts/build-docs-reference.mjs'
+      - 'scripts/mkdocs_hooks.py'
+      - 'scripts/check-docs-lists.py'
   pull_request:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
       - 'scripts/build-docs-reference.mjs'
+      - 'scripts/mkdocs_hooks.py'
+      - 'scripts/check-docs-lists.py'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +45,8 @@ jobs:
       - name: Generate the reference pages from payload/
         run: node scripts/build-docs-reference.mjs
       - run: mkdocs build --strict
+      - name: No list rendered as paragraph text
+        run: python scripts/check-docs-lists.py site
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
