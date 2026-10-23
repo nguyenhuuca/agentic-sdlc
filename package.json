@@ -9,7 +9,7 @@
   "files": ["bin", "payload", "packs", "LICENSE", "README.md"],
   "engines": { "node": ">=20" },
   "scripts": {
-    "test": "node --test tests/*.test.mjs payload/scripts/sdlc/__tests__/*.test.mjs",
+    "test": "node scripts/run-tests.mjs",
     "clean-room": "node scripts/check-clean-room.mjs --upstream .upstream"
   }
 }

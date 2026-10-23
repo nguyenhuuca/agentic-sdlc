@@ -44,7 +44,7 @@ jobs:
       - name: shellcheck
         run: |
           files=$(git ls-files '*.sh')
-          [ -z "$files" ] || shellcheck $files
+          [ -z "$files" ] || echo "$files" | xargs shellcheck
       - name: actionlint
         run: |
           bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash) 1.7.7

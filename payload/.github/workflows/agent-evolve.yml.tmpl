@@ -145,7 +145,7 @@ jobs:
           mkdir -p "$T/ship" "$T/proposal/evolve-out"
           node scripts/sdlc/evolve.mjs manifest --signals "$T/trusted/signals.json" --manifest "$T/proposal/evolve-out/manifest.json" \
             --rows "$T/ship/rows.tsv" --none "$T/ship/none.tsv"
-          while IFS=$'\t' read -r signal slug case kind body message || [ -n "$signal" ]; do
+          while IFS=$'\t' read -r signal slug _ _ _ message || [ -n "$signal" ]; do
             r="$T/ship/$slug"
             if [ ! -d "$T/proposal/evolve-out/$slug/tree" ]; then
               echo skip > "$r.status"; echo "$signal: no staged files, left for the next run"; continue
@@ -165,7 +165,7 @@ jobs:
         run: |
           set -u
           T="$RUNNER_TEMP"
-          while IFS=$'\t' read -r signal slug case kind body message || [ -n "$signal" ]; do
+          while IFS=$'\t' read -r signal slug case kind _ _ || [ -n "$signal" ]; do
             r="$T/ship/$slug"; branch="evolve/$slug"
             [ -f "$r.status" ] && continue
             if ! node scripts/sdlc/evolve.mjs check-paths --base "$MAIN" --head "$branch" --kind "$kind" > "$r.paths" 2>&1; then
@@ -210,7 +210,7 @@ jobs:
             { printf '<!-- evolve:signal=%s -->\n\n' "$1"; redact < "$3"; printf '\n\nRun: %s\n' "$RUN_URL"; } > "$T/ship/issue.md"
             gh issue create --label evolve --title "$2" --body-file "$T/ship/issue.md" < /dev/null || rc=1
           }
-          while IFS=$'\t' read -r signal slug case kind body message || [ -n "$signal" ]; do
+          while IFS=$'\t' read -r signal slug _ _ body _ || [ -n "$signal" ]; do
             r="$T/ship/$slug"; branch="evolve/$slug"
             case "$(cat "$r.status" 2>/dev/null)" in
               skip) ;;
