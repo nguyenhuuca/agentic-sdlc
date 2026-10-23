@@ -46,7 +46,7 @@ Design decisions D1–D8: https://github.com/nguyenhuuca/agentic-sdlc/blob/main/
 - **Still written:** the `TASKS.md` lines (one per task, `[x]` + hash when landed), `session.txt` with `plan: -`, the scratchpad ledger, and the run-metrics JSON (see Ledger: it is data, not a doc).
 - **Promote to full mode** when the diff (tests excluded) grows past ~100 LOC or an ADR turns up: write the plan file then and continue as a normal run.
 
-Write `session.txt` (`.claude/rules/session-file.md`) and create the ledger (see Ledger) before stage 1.
+Write `session.txt` (`.claude/rules/session-file.md`) and create the ledger before stage 1: `node scripts/sdlc/autopilot-ledger.mjs start --slug <slug> --request "<request, one line>" [--plan <plan path>]` (see Ledger).
 
 ## Headless Mode (ADR-0002)
 
@@ -80,7 +80,7 @@ Used when `$ARGUMENTS` starts with `--headless`. `.github/workflows/autopilot.ym
 - Worker worktree commits are cherry-picked onto the **PR branch**, not `main`.
 - The build job finds the plan with `git diff --name-only origin/main...HEAD -- docs/plans/`. If there is none (lite mode), the plan and the report rows are in the PR body: read them with `gh pr view <N> --json body --jq .body`, and write the final report back with `gh pr edit <N> --body-file`.
 - `session.txt` is not written, because the runner is thrown away; the PR is the record.
-- The runner's `scratchpad/` is lost when the job ends, so the **report on the PR branch is the ledger**: each job writes its `## Runs` rows there, not only in `scratchpad/`. The build job finds the report with `git diff --name-only origin/main...HEAD -- docs/reports/`, reads it, and fills every remaining section of the template (Gate 2: "pending: owner merges"; CI + smoke: "n/a in CI: runs after merge").
+- The runner's `scratchpad/` is lost when the job ends, so the **report on the PR branch is the ledger**: each job adds its `## Runs` rows there with `node scripts/sdlc/autopilot-ledger.mjs add --file <report path> ...`, not only in `scratchpad/`. The build job finds the report with `git diff --name-only origin/main...HEAD -- docs/reports/`, reads it, and fills every remaining section of the template (Gate 2: "pending: owner merges"; CI + smoke: "n/a in CI: runs after merge").
 
 **No stage is optional in CI.** Plan review and **code review** run on every headless run, whatever the diff size: a separate `worker-reviewer` (or `swarm-review`) must return a verdict block. "The owner reviews at Gate 2" is **not** a reason to skip one; Gate 2 is in addition to the reviews, not a substitute. The Gate 2 comment lists every stage with its result (plan review verdict, code review verdict, QA ×2 result, gates). Without a code-review `approve`, do **not** run `gh pr ready`: comment `blocked` instead. Seen in practice: a build job skipped code review because "the diff is tiny".
 
@@ -167,7 +167,7 @@ Show the plan path, the task table, the advisories that were left open, and the 
 
 1. Run the full quality gates once, for the components the change touched: `git diff --name-only <base> | node scripts/sdlc/sdlc-config.mjs gates` prints them, one command per line. Run each; any red gate goes back to the QA loop.
 2. Commit with explicit pathspecs. Flip the `TASKS.md` lines to `[x]` with the hash and update `docs/tracking.md` when the plan status changes. **Every commit of the run** (local and headless) ends with the trailer `Autopilot-Run: <run id>` on its own line just before `Co-Authored-By:`; the run id is `<YYYY-MM-DD>-<slug>`, the same as the run-metrics file name. `scripts/sdlc/agent-metrics.mjs` uses it to link later `fix:` commits and reverts back to the run.
-   - **Before this commit**, check the ledger has a row for every stage that ran (plan, plan review, Gate 1, implement, code review, each QA run, fixes) and add any that are missing from this conversation.
+   - **Before this commit**, run `node scripts/sdlc/autopilot-ledger.mjs check`. Exit 1 names the stages with no row: add each from this conversation with `add`, then check again.
    - Write `session.txt` as it will be once the push succeeds (`status: done`, `progress: 100`, `next: -`) and commit it with the run. If Gate 2 then does not push, rewrite it as `blocked` with the reason in `blocker:` and commit that. Found in a test run: the run committed `progress: 90, next: Gate 2 push check`, which stayed on the remote after the push.
 3. **Gate 2:** show the commits, the gate results, the flaky list, the manual checks, and the ledger total. Ask with `AskUserQuestion`: **Push / Don't push yet**. There is no `--yes`.
    - **`--auto-push` or `--auto`:** run `bash scripts/sdlc/autopilot-autopush-check.sh`. Exit 0 → print the same content plus the script's line and push without asking; the ledger records `gate2 | auto`. Exit 1 → ask as above and show the script's reason. Reaching this step already needs a code-review `approve`, QA ×2 exit 0 and green gates.
@@ -178,7 +178,16 @@ Show the plan path, the task table, the advisories that were left open, and the 
 
 ## Ledger (D5)
 
-File: `scratchpad/autopilot/<YYYYMMDD-HHMM>-<slug>.md`, started from `resources/ledger.template.md`. Append one row per stage run (columns and rules are in the template), **right after that stage and before starting the next**; the Land stage checks for gaps.
+File: `scratchpad/autopilot/<YYYYMMDD-HHMM>-<slug>.md`, created by `node scripts/sdlc/autopilot-ledger.mjs start`. **Never edit its table by hand.** As soon as a stage finishes, before the next one starts, add its row:
+
+```bash
+node scripts/sdlc/autopilot-ledger.mjs add --stage <stage> --result <result> [--path skill|fallback|inline] [--blocking n] [--advisory n] [--turns n] [--min n] [--tokens n]
+```
+
+- `stage`: `plan`, `plan-review`, `gate1`, `implement`, `code-review`, `qa-specs`, `qa`, `fix`, `land`, `gate2`, `ci`. The script numbers rows and rounds itself; pass `--cycle n` only when a Revise at Gate 1 starts a new cycle.
+- `result`: reviews `approve` / `revise` / `blocked`; Gate 1 `approved` / `auto` / `revise` / `stopped`; Gate 2 `push` / `auto` / `no push` / `stopped`; QA `pass` / `flaky <n>` / `fail <n>` / `broken`; other stages a few words. A wrong value is rejected (exit 2): fix the call, do not skip the row.
+- After Gate 2, add its row, then run `total` again so the total counts it.
+- Free-text findings (flaky tests, open advisories, manual checks) go in with `node scripts/sdlc/autopilot-ledger.mjs note "<text>"`; `node scripts/sdlc/autopilot-ledger.mjs total` writes the total line shown at the gates. Column rules: `resources/ledger.template.md`.
 
 - `turns` / `tokens` / `min` come from each Agent result's usage. For a primary-path stage, add up the workers it spawned, plus the orchestrator's wall time.
 - **Cost is exact, not estimated.** At the end, run `node scripts/sdlc/claude-cost.mjs --from <run start ISO> --to <now ISO> --md`. It reads this session's transcripts (main + `subagents/`), dedupes requests and prices them with `scripts/sdlc/claude-pricing.json`. Paste its table into the report's `## Cost`. Label the figures as API list-price equivalent, not a bill. Do not estimate cost from the token totals in Agent results: they miss repeated cache reads. If a model is missing from the pricing file, the script warns; add the model from the pricing page.

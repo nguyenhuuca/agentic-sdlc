@@ -91,5 +91,5 @@ v1 leaves out (later): swarm-research, presentation deck, threat-modeling, postm
 
 ## Known Issues (v0.1.1)
 
-- The autopilot ledger (`scratchpad/autopilot/*.md`) got only its first row in both test runs, even after the skill asked for a row after each stage and a gap check at Land. The durable record (run-metrics JSON, commit trailer) was right both times. Fix with a `scripts/sdlc/autopilot-ledger.mjs add ...` command the skill calls, instead of prose.
+- ~~The autopilot ledger got only its first row in both test runs~~ Fixed in 0.1.2 by `scripts/sdlc/autopilot-ledger.mjs`: the next test run recorded all 9 stages. That run also showed `check` requiring Gate 2, which comes after the landing commit; it now requires only the stages before it.
 - `npx <path-to.tgz>` treats the path as a command and does nothing; local testing needs `npx --package=file:<tgz> agentic-sdlc ...`. Users run `npx github:...`, which is a package spec.

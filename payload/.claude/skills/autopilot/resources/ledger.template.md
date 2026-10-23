@@ -8,7 +8,9 @@
 
 | # | cycle | stage | round | path | result | blocking | advisory | turns | min | tokens | ≈$ |
 |---|-------|-------|-------|------|--------|----------|----------|-------|-----|--------|----|
-| 1 | 1 | plan | 1 | skill | plan written | — | — | 0 | 0 | 0 | — |
+| <n> | <cycle> | <stage> | <round> | <path> | <result> | <n> | <n> | <n> | <n> | <n> | — |
+
+Rows are written by `node scripts/sdlc/autopilot-ledger.mjs add ...`, never by hand; `start` creates this file.
 
 Column rules:
 - `path`: `skill` (Skill tool) or `fallback` (worker read the SKILL.md).
