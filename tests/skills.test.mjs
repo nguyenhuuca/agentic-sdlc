@@ -8,8 +8,8 @@ const ROOT = 'payload'
 const skills = skillNames(ROOT)
 const read = (name) => readFileSync(join(ROOT, skills.get(name)), 'utf8')
 
-// Hooks come in P5; test fixtures name files that do not exist on purpose
-const PENDING = ['.claude/hooks/session-start-loader.sh']
+// Test fixtures name files that do not exist on purpose
+const PENDING = []
 
 test('the v1 skill set is present, each named after its directory', () => {
   const want = ['architect', 'autopilot', 'builder', 'code-check', 'evolve', 'land-the-plane', 'qa-engineer', 'scope', 'spec',

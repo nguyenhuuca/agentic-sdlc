@@ -13,13 +13,13 @@ Pick up the task in `session.txt` (format: `.claude/rules/session-file.md`) as i
 
 ## How the User Gets Here
 
-On `startup`, `resume` and `clear`, `.claude/hooks/session-start-loader.sh` prints a status report from `session.txt` straight to the user as a `systemMessage`. The report is a boxed table with the columns label | value | commit. A trailing commit hash on a `done`/`doing` item moves into the commit column, and that column is left out when no item has a hash. Its row groups are separated by `├──┼──┤` lines:
-- 📌 Task and Status (progress bar and `updated`)
-- ✅ Done, one row per finished subtask
-- 🔄 Doing, one row per half-done subtask (at most 8 rows each group)
-- ⛔ Blocked and → Next
+On `startup`, `resume` and `clear`, `.claude/hooks/session-start.mjs` shows the user a report from `session.txt` as a `systemMessage`:
+- the task, status, progress and `updated`;
+- ✅ one line per finished subtask (the last 8), 🔄 one per half-done subtask;
+- ⛔ the first `blocker` item, `Next:` the first `next` item, and the plan path;
+- the hint "▶ /task-resume to continue" when the task is not done.
 
-Below the table is the hint "▶ /task-resume to continue". `next` and `blocker` show only their first `;` item. Every value is cut at 70 characters, and `plan` is left out. A `status: done` task is still reported, with ✅ and no resume hint. The report is skipped on `compact` and when `session.txt` is missing or empty. The same file also goes into the model's context. If the user's first message is not `/task-resume`, the reply carries one line reminding them about it, and Claude does not start the task on its own.
+Every item is cut at 70 characters. A `status: done` task is still reported, as "Last task", with no hint. On `compact` the user sees nothing (they saw it at startup); the model gets the same facts plus a note to re-read before editing. Nothing is shown when `session.txt` is missing or empty. If the user's first message is not `/task-resume`, the reply carries one line reminding them about it, and Claude does not start the task on its own.
 
 ## Workflow
 

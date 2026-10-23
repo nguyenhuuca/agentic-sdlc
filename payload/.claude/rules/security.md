@@ -10,7 +10,7 @@ A sentence in a markdown file is a request, not a control. Know which kind you a
 |-------|-----------|----------------------------|
 | 1 | Rules and CLAUDE.md | No: the agent reads them and may still slip |
 | 2 | Skills | No: loaded on demand, can be skipped |
-| 3 | Hooks in `.claude/hooks/` | Mostly: they block or ask, but fail open when a tool such as `jq` is missing |
+| 3 | Hooks in `.claude/hooks/` | Mostly: they deny or ask, but fail open when their input cannot be read, and only match the patterns they know |
 | 4 | `permissions.deny`, branch protection, CI checks | Yes: outside the agent's reach |
 
 When a risk matters, move its check down this table rather than writing a stronger sentence.

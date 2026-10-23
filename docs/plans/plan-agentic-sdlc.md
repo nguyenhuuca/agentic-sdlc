@@ -10,7 +10,7 @@ Status: approved 2026-10-23. Skill names stay as in assessment; the GitHub repo 
 - **Owner-written parts are ported, not rewritten:** autopilot, Evolve, `agent-metrics`, `claude-cost`, `session.txt` / `/task-resume`, statusline, sequence template, ADR ideas 0025/0027/0028/0029. They lose every Funny Movies detail (paths `api/` `webapp/`, `mvn`, prod URLs).
 - **License:** MIT, copyright nguyenhuuca. No upstream attribution needed (nothing copied); README credits the idea.
 - **Stack-neutral core.** Commands (test, build, lint, coverage, smoke) come from `sdlc.config.json` in the target repo, read at runtime by scripts and named by skills. No templating of rule text, so updates stay clean.
-- Node >= 20, no npm dependencies in the installer or scripts. Bash for hooks (with the Windows Git Bash fixes already learned).
+- Node >= 20, no npm dependencies in the installer, scripts or hooks. Hooks are Node, not bash + jq: Node is already required, a missing jq no longer turns a hook off, and CRLF cannot break them.
 
 ## Layout
 
@@ -82,4 +82,5 @@ v1 leaves out (later): swarm-research, presentation deck, threat-modeling, postm
 - [x] **P3** Worker agents, new text: explorer (haiku), builder, reviewer, research (sonnet), architect (opus); no `Agent` tool, `maxTurns` on each, reviewer read-only with the Evolve section and verdict contract. Tests on structure; live check: `claude -p --agent worker-reviewer` on a seeded SQL injection returned `revise` with it as `[B]` (CWE-89), $0.07
 - [x] **P4** Core skills, new text: `swarm-plan` (Artifact Requirements), `swarm-review` (severity, Root Cause Analysis, verdict block), `swarm-execute`, `qa-engineer`, `land-the-plane` (Mode A/B, retro), `core-engineering/testing`, `scope`, `spec`, `architecture/writing-adrs`, `code-check`, `builder`, `architect`; 10 artifact templates. Autopilot now lands through `land-the-plane` Mode B instead of an AGENTS.md section; `verdict.md` maps severities directly
   - Changed from the plan: per-skill evals replaced by `lib/refs.mjs`, which fails on any skill, agent, template, script, hook or rule named but missing (also the base of `doctor`). There is no skill-eval runner to make evals meaningful yet
-- [ ] **P5** Hooks (new code)
+- [x] **P5** Hooks in Node, new code: `secret-guard` (token shapes, literal secret assignments, .env writes → ask), `command-guard` (root/home deletion, force push, raw disk → deny; hard reset, rm -r, curl|sh, DROP, sudo, cat .env → ask), `session-start` (report for the person, context for the model, compaction note), `stop-check` (unpushed commits, stale session.txt; never blocks); `settings.json` with hooks, deny list and statusline. 16 tests; live check in Claude Code: `git push origin +main` (not in the deny list) was blocked by the hook and the session task reached the model's context, $0.005
+- [ ] **P6** Installer (exclude `__tests__/` from what is installed)
