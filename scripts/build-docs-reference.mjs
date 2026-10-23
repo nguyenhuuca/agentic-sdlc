@@ -65,7 +65,9 @@ export function skillsPage() {
   return ['# Skills', '', 'Workflows and know-how in `.claude/skills/`.', '',
     '| Skill | Invoked by | Arguments | What it does |', '|-------|-----------|-----------|--------------|',
     ...meta.map((m) => `| [\`${m.name}\`](#${m.name}) | ${how(m)} | ${m['argument-hint'] ? `<code>${htmlCode(m['argument-hint'])}</code>` : ''} | ${md(m.description)} |`), '',
-    ...meta.map((m) => section(m.s, m.name)),
+    // MkDocs drops the frontmatter, so the usage line from argument-hint is repeated under each heading
+    ...meta.map((m) => section(m.s, m.name, m['disable-model-invocation'] !== undefined
+      ? `**Usage:** <code>/${m.name}${m['argument-hint'] ? ` ${htmlCode(m['argument-hint'])}` : ''}</code>` : '')),
   ].join('\n')
 }
 

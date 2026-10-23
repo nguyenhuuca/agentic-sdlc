@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3 (2026-10-23)
+
+- Autopilot skill opens with a **Usage** table (request, plan file, `--auto-push`, `--auto`, headless). The flags were only in the frontmatter, which MkDocs does not render, and deep in the scope guard.
+- The docs reference shows each skill's usage line under its heading.
+
 ## 0.1.2 (2026-10-23)
 
 - **Autopilot ledger script** `scripts/sdlc/autopilot-ledger.mjs` (`start`, `add`, `note`, `check`, `total`). The skill adds a row by command after each stage instead of editing a table, and runs `check` before the landing commit. It also writes the `## Runs` rows of a headless run report. Before: two test runs left only the first row; after: a test run recorded all 9 stages.
