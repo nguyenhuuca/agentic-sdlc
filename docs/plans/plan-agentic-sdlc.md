@@ -87,7 +87,7 @@ v1 leaves out (later): swarm-research, presentation deck, threat-modeling, postm
 - [x] **P7** Stack packs `java-maven` (version from the pom; Spring Boot, Liquibase, Flyway, JaCoCo rows; `src/main/resources/db/` protected), `node` (gates only for scripts that exist; Vitest or Jest + jest-junit QA; TypeScript, React, Next, Vite, Express rows), `python` (pytest; FastAPI, Django, Flask, Ruff), `go` (vet + test; gotestsum QA). Pack format gained `vars`, `qaIf`, `stackIf`. On assessment the packs produce the same gates as its hand-written setup, and `qa-twice` with that config ran 69 real tests (Maven + Vitest) twice, all pass. CI lints workflows rendered from all four packs
 - [x] **P8** Docs: `docs/concepts/overview.md`, `docs/config.md` (config and pack reference), `docs/headless.md`, CHANGELOG, README; version 0.1.0. Round trip on a fresh Node + Vitest repo with a local origin: `init` from the packed tarball → `doctor` all green → `/autopilot --auto` twice (Sonnet orchestrator, $0.46 and $0.43, 2 min each): plan review and code review by separate `worker-reviewer` runs (approve, 0 blocking), `qa-twice`, auto-push check allowed, pushed with the `Autopilot-Run` trailer and run-metrics JSON; `update` in between replaced only the changed skill file
   - Fixed from run 1: `session.txt` was committed as `progress: 90, next: Gate 2 push check` and stayed so on the remote; the Land stage now writes the post-push state into the run commit (run 2: `done`, 100)
-- [ ] Tag v0.1.0 (after push)
+- [x] Tagged v0.1.0 (ba60c53) and v0.1.1 (80c0f3e: CRLF fix, Windows CI green again); `npx github:nguyenhuuca/agentic-sdlc#v0.1.1 init` + `doctor` verified from GitHub
 
 ## Known Issues (v0.1.1)
 
