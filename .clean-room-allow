@@ -1,0 +1,2 @@
+# Phrases that may repeat text found upstream (one per line, at least as many words as the check uses).
+# Add a line only for text that is not creative: license boilerplate, tool output, a standard command line.

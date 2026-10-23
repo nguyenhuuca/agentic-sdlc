@@ -1,0 +1,15 @@
+{
+  "name": "agentic-sdlc",
+  "version": "0.0.0",
+  "description": "An installable Claude Code SDLC setup: planning flow, worker agents, review and QA gates, autopilot and a self-improvement loop.",
+  "license": "MIT",
+  "author": "nguyenhuuca",
+  "type": "module",
+  "bin": { "agentic-sdlc": "bin/agentic-sdlc.mjs" },
+  "files": ["bin", "payload", "packs", "LICENSE", "README.md"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs payload/scripts/__tests__/*.test.mjs",
+    "clean-room": "node scripts/check-clean-room.mjs --upstream .upstream"
+  }
+}
