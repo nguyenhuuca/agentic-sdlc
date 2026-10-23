@@ -17,7 +17,7 @@ agentic-sdlc gives Claude Code a delivery process: what to write before coding, 
 ## The Flow
 
 ```mermaid
-flowchart LR
+flowchart TD
   idea[Idea] --> scope["/scope → PRD"]
   scope --> spec["/spec → spec + sequence diagrams"]
   spec --> plan["/swarm-plan → plan + tasks"]

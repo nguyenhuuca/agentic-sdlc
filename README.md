@@ -11,7 +11,9 @@ A Claude Code setup you install into your own repository. It gives the agent a s
 
 Version 0.1.0 ([changelog](CHANGELOG.md)). Stack packs: Java (Maven), Node.js (npm), Python (pytest), Go; other stacks work with components written by hand in `sdlc.config.json`.
 
-Docs: [how it works](docs/concepts/overview.md) · [sdlc.config.json and packs](docs/config.md) · [autopilot and Evolve on GitHub](docs/headless.md) · [decisions](docs/adr/)
+**Documentation site: https://nguyenhuuca.github.io/agentic-sdlc/**
+
+In this repo: [how it works](docs/concepts/overview.md) · [sdlc.config.json and packs](docs/config.md) · [autopilot and Evolve on GitHub](docs/headless.md) · [decisions](docs/adr/)
 
 ## Install
 

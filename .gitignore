@@ -3,3 +3,5 @@ node_modules/
 scratchpad/
 .claude/settings.local.json
 *.sdlc-new
+docs/reference/
+site/

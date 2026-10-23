@@ -1,0 +1,100 @@
+site_name: agentic-sdlc
+site_description: An installable Claude Code SDLC setup — planning flow, worker agents, review and QA gates, autopilot and a self-improvement loop
+site_author: nguyenhuuca
+site_url: https://nguyenhuuca.github.io/agentic-sdlc/
+repo_url: https://github.com/nguyenhuuca/agentic-sdlc
+repo_name: nguyenhuuca/agentic-sdlc
+edit_uri: edit/main/docs/
+copyright: MIT License
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+# The ADRs and the plan cite repository paths in prose; links that leave docs/ are expected
+validation:
+  links:
+    not_found: warn
+    unrecognized_links: info
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Concepts:
+      - How it works: concepts/overview.md
+      - Autopilot design: concepts/autopilot-design.md
+  - Guides:
+      - sdlc.config.json and packs: config.md
+      - Autopilot and Evolve on GitHub: headless.md
+  - Reference:
+      - Rules: reference/rules.md
+      - Worker agents: reference/agents.md
+      - Skills: reference/skills.md
+      - Hooks and permissions: reference/hooks.md
+      - Stack packs: reference/packs.md
+      - Artifact templates: reference/templates.md
+  - Decisions:
+      - "ADR-0001 Clean-room core": adr/0001-clean-room-core.md
+      - "ADR-0002 Headless autopilot": adr/0002-headless-autopilot.md
+      - "ADR-0003 Autopilot auto gates": adr/0003-autopilot-auto-gates.md
+      - "ADR-0004 Self-improvement loop": adr/0004-agent-self-improvement-loop.md
+      - "ADR-0005 Local auto gates": adr/0005-local-autopilot-auto-gates.md
+      - "ADR-0006 Headless Evolve staging": adr/0006-headless-evolve-staging.md
+  - Project:
+      - Changelog: changelog.md
+      - v1 plan: plans/plan-agentic-sdlc.md
