@@ -44,7 +44,7 @@ agentic-sdlc/
 |---|-------|--------|-------|
 | P0 | Scaffold | README, LICENSE, layout, CI (node test + clean-room + shellcheck + actionlint), this plan, ADR-0001 clean-room | CI green on empty payload |
 | P1 | Port owner-written parts | autopilot skill + verdict + templates, `autopilot.yml`, merge/cost/autopush scripts, Evolve skill + `evolve.mjs` + `agent-metrics.mjs` + workflow, `claude-cost.mjs` + pricing, session rule + `/task-resume`, statusline; all reading `sdlc.config.json` | existing tests ported (evolve 19, metrics 36) pass; grep finds no `api/`, `webapp/`, `mvn`, `funny` |
-| P2 | Core rules (new text) | `core.md` (principles), `security.md`, `quality.md`, `debugging.md`, `session-file.md`, `stack.md` placeholder filled by packs | clean-room check; always-loaded total < 12 KiB |
+| P2 | Core rules (new text) | `core-directives.md`, `security.md`, `code-quality.md`, `debugging-protocol.md`, `agent-constraints.md`, `tech-strategy.md` (filled by packs), `session-file.md` (ported) | clean-room check; always-loaded total <= 15 KiB (assessment: 30 KiB), held by a test |
 | P3 | Worker agents (new text) | explorer (Haiku), builder (Sonnet), reviewer (Sonnet), architect (Opus), researcher (Sonnet); tools allowlists, maxTurns | autopilot dry run on a sample repo uses each |
 | P4 | Core skills (new text) | `scope` (idea → PRD), `spec`, `writing-adrs`, `swarm-plan`, `swarm-execute`, `swarm-review`, `qa-engineer`, `land-the-plane`, `code-check`, `testing`, `builder`, `architect` (same names as assessment) | each skill has 2–3 evals; autopilot + evolve reference only names that exist (doctor check) |
 | P5 | Hooks (new code) | secret guard (Write/Edit/Bash), dangerous command guard, session start (session.txt report), stop validator; fail-open documented | bats-style tests via node:test spawning bash, on Linux + Windows runners |
@@ -78,4 +78,5 @@ v1 leaves out (later): swarm-research, presentation deck, threat-modeling, postm
   - workflows as `*.yml.tmpl` (`deployBranch`, `setupSteps`, `allowedBash`, `evolveCron`); unattended steps read trusted copies of the helper and config
   - ADR-0002..0006 + `docs/concepts/autopilot-design.md` ported with an origin note
   - Found while porting: a PR could have changed the helper that judges it; fixed with `SDLC_HELPER` / `SDLC_CONFIG_FILE`
-- [ ] **P2** Core rules (new text)
+- [x] **P2** Core rules, new text: `core-directives`, `security`, `code-quality`, `debugging-protocol`, `agent-constraints`, `tech-strategy` (stack sections filled by packs). File names kept so ported skills still resolve; 14 KiB always loaded (assessment: 30 KiB). Tests: size limit, rule cross-references, push and security precedence present
+- [ ] **P3** Worker agents (new text)
