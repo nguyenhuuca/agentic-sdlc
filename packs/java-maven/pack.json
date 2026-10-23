@@ -1,0 +1,32 @@
+{
+  "name": "Java (Maven)",
+  "detect": ["pom.xml"],
+  "vars": {
+    "javaVersion": { "file": "pom.xml", "regex": "<(?:java\\.version|maven\\.compiler\\.release|maven\\.compiler\\.target)>(\\d+)<", "default": "21" }
+  },
+  "component": {
+    "gates": ["mvn -B -q -f @dir@pom.xml verify"],
+    "qa": {
+      "run": "mvn -B -q -f @dir@pom.xml test -Dtest={tests} -Dsurefire.failIfNoSpecifiedTests=false -Djacoco.skip=true",
+      "junit": "@dir@target/surefire-reports",
+      "sep": ","
+    }
+  },
+  "setupSteps": [[
+    "- uses: actions/setup-java@v4",
+    "  with:",
+    "    distribution: temurin",
+    "    java-version: '@javaVersion@'",
+    "    cache: maven"
+  ]],
+  "allowedBash": ["mvn"],
+  "stack": [["Language", "Java @javaVersion@"], ["Build", "Maven"], ["Tests", "JUnit via Surefire"]],
+  "stackIf": [
+    { "file": "pom.xml", "contains": "spring-boot", "rows": [["Framework", "Spring Boot"]] },
+    { "file": "pom.xml", "contains": "liquibase", "rows": [["Migrations", "Liquibase"]] },
+    { "file": "pom.xml", "contains": "flyway", "rows": [["Migrations", "Flyway"]] },
+    { "file": "pom.xml", "contains": "jacoco", "rows": [["Coverage", "JaCoCo"]] }
+  ],
+  "prohibited": ["No schema changes outside migrations (no Hibernate ddl-auto create/update)"],
+  "extraProtectedPaths": ["^@dir@src/main/resources/db/"]
+}

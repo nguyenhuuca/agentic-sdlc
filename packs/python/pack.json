@@ -1,0 +1,32 @@
+{
+  "name": "Python (pytest)",
+  "detect": ["pyproject.toml", "requirements.txt", "setup.py"],
+  "vars": {
+    "pythonVersion": { "file": "pyproject.toml", "regex": "requires-python\\s*=\\s*\"[^\\d]*(\\d+\\.\\d+)", "default": "3.12" }
+  },
+  "component": {
+    "gates": ["python -m pytest -q @dir@."],
+    "qa": {
+      "run": "python -m pytest -q {tests} --junitxml=@dir@.qa-junit.xml",
+      "junit": "@dir@.qa-junit.xml"
+    }
+  },
+  "setupSteps": [[
+    "- uses: actions/setup-python@v5",
+    "  with:",
+    "    python-version: '@pythonVersion@'",
+    "    cache: pip",
+    "- run: if [ -f @dir@requirements.txt ]; then pip install -r @dir@requirements.txt; fi; if [ -f @dir@pyproject.toml ]; then pip install -e '@dir@.[dev]' || pip install -e @dir@.; fi"
+  ]],
+  "allowedBash": ["python", "pip", "pytest", "ruff", "mypy"],
+  "stack": [["Language", "Python @pythonVersion@"], ["Tests", "pytest"]],
+  "stackIf": [
+    { "file": "pyproject.toml", "contains": "fastapi", "rows": [["Framework", "FastAPI"]] },
+    { "file": "pyproject.toml", "contains": "django", "rows": [["Framework", "Django"]] },
+    { "file": "pyproject.toml", "contains": "flask", "rows": [["Framework", "Flask"]] },
+    { "file": "pyproject.toml", "contains": "ruff", "rows": [["Lint", "Ruff"]] },
+    { "file": "requirements.txt", "contains": "fastapi", "rows": [["Framework", "FastAPI"]] },
+    { "file": "requirements.txt", "contains": "django", "rows": [["Framework", "Django"]] },
+    { "file": "requirements.txt", "contains": "flask", "rows": [["Framework", "Flask"]] }
+  ]
+}

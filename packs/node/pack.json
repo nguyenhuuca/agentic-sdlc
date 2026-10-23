@@ -1,0 +1,45 @@
+{
+  "name": "Node.js (npm)",
+  "detect": ["package.json"],
+  "vars": {
+    "nodeVersion": { "file": "package.json", "regex": "\"node\"\\s*:\\s*\"[^\\d]*(\\d+)", "default": "20" }
+  },
+  "component": {
+    "scriptGates": {
+      "lint": "npm --prefix @dir@. run lint",
+      "typecheck": "npm --prefix @dir@. run typecheck",
+      "test": "npm --prefix @dir@. test",
+      "build": "npm --prefix @dir@. run build"
+    },
+    "qaIf": [
+      { "file": "package.json", "contains": "\"vitest\"", "qa": {
+        "run": "cd @dir@. && npx vitest run {tests} --reporter=junit --outputFile=.qa-junit.xml",
+        "junit": "@dir@.qa-junit.xml"
+      } },
+      { "file": "package.json", "contains": ["\"jest\"", "\"jest-junit\""], "qa": {
+        "run": "cd @dir@. && JEST_JUNIT_OUTPUT_FILE=.qa-junit.xml npx jest --ci --reporters=jest-junit {tests}",
+        "junit": "@dir@.qa-junit.xml"
+      } }
+    ]
+  },
+  "setupSteps": [[
+    "- uses: actions/setup-node@v4",
+    "  with:",
+    "    node-version: '@nodeVersion@'",
+    "    cache: npm",
+    "    cache-dependency-path: @dir@package-lock.json",
+    "- run: npm ci --prefix @dir@."
+  ]],
+  "allowedBash": ["npm", "npx"],
+  "stack": [["Runtime", "Node.js @nodeVersion@"], ["Package manager", "npm"]],
+  "stackIf": [
+    { "file": "package.json", "contains": "\"typescript\"", "rows": [["Language", "TypeScript"]] },
+    { "file": "package.json", "contains": "\"react\"", "rows": [["UI", "React"]] },
+    { "file": "package.json", "contains": "\"next\"", "rows": [["Framework", "Next.js"]] },
+    { "file": "package.json", "contains": "\"vite\"", "rows": [["Build", "Vite"]] },
+    { "file": "package.json", "contains": "\"express\"", "rows": [["Server", "Express"]] },
+    { "file": "package.json", "contains": "\"vitest\"", "rows": [["Tests", "Vitest"]] },
+    { "file": "package.json", "contains": "\"jest\"", "rows": [["Tests", "Jest"]] }
+  ],
+  "uncountedPaths": ["(^|/)package-lock\\.json$"]
+}

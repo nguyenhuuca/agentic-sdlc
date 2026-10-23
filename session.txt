@@ -1,7 +1,7 @@
 task: agentic-sdlc v1 (clean-room SDLC framework)
 status: in_progress
-progress: 80
-done: P0 5c83818; P1 721a85d; P2 111696c; P3 1baac51; P4 ff718f8; P5 3de1c15; P6 installer
-next: P7 stack packs (java-maven/spring, node/react-vite, python, go)
+progress: 88
+done: P0 5c83818; P1 721a85d; P2 111696c; P3 1baac51; P4 ff718f8; P5 3de1c15; P6 3b8f390; P7 stack packs
+next: P8 docs (concepts, config reference, upgrade) + fresh-install round trip + tag v0.1.0
 plan: docs/plans/plan-agentic-sdlc.md
-updated: 2026-10-23 10:38
+updated: 2026-10-23 10:52

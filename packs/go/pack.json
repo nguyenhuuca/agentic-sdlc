@@ -1,0 +1,22 @@
+{
+  "name": "Go",
+  "detect": ["go.mod"],
+  "vars": {
+    "goVersion": { "file": "go.mod", "regex": "^go (\\d+\\.\\d+)", "flags": "m", "default": "1.22" }
+  },
+  "component": {
+    "gates": ["go -C @dir@. vet ./...", "go -C @dir@. test ./..."],
+    "qa": {
+      "run": "cd @dir@. && go run gotest.tools/gotestsum@v1.12.0 --junitfile .qa-junit.xml -- -run '^({tests})$' ./...",
+      "junit": "@dir@.qa-junit.xml",
+      "sep": "|"
+    }
+  },
+  "setupSteps": [[
+    "- uses: actions/setup-go@v5",
+    "  with:",
+    "    go-version-file: @dir@go.mod"
+  ]],
+  "allowedBash": ["go"],
+  "stack": [["Language", "Go @goVersion@"], ["Tests", "go test"]]
+}
