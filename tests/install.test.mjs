@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply, buildConfig, detect, mergeSettings, planInstall, planUninstall, readManifest, summarize } from '../lib/install.mjs'
@@ -71,6 +71,32 @@ test('init installs the payload, merges shared files and records a manifest', ()
   assert.equal(m.version, '0.1.0')
   assert.ok(m.files['.claude/rules/security.md'])
   assert.ok(!('sdlc.config.json' in m.files) && !('CLAUDE.md' in m.files), 'merged files are not owned')
+})
+
+// A Windows checkout with core.autocrlf turns every text file of the payload into CRLF
+function crlfPayload() {
+  const dir = mkdtempSync(join(tmpdir(), 'crlf-'))
+  cpSync(PAYLOAD, dir, { recursive: true })
+  const walk = (d) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const p = join(d, e.name)
+      if (e.isDirectory()) walk(p)
+      else writeFileSync(p, readFileSync(p, 'utf8').replace(/\r?\n/g, '\r\n'))
+    }
+  }
+  walk(dir)
+  return dir
+}
+
+test('a CRLF payload (Windows checkout) installs the same way, and a rerun changes nothing', () => {
+  const root = repo()
+  const payload = crlfPayload()
+  writeFileSync(join(root, 'CLAUDE.md'), '# Mine\r\n')
+  install(root, { payload, workflows: ['autopilot'] })
+  assert.match(read(root, '.claude/rules/tech-strategy.md'), /\| Language \| JavaScript \(`web\/`\) \|/)
+  assert.ok(!/\{\{\w+\}\}/.test(read(root, '.github/workflows/autopilot.yml')), 'workflow placeholders rendered')
+  assert.match(read(root, 'CLAUDE.md'), /^# Mine\r\n\n<!-- agentic-sdlc:begin/)
+  assert.deepEqual(summarize(install(root, { payload, workflows: ['autopilot'] })), [])
 })
 
 test('a second run changes nothing', () => {

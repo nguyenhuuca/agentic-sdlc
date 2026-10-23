@@ -92,3 +92,11 @@ test('a Java + React repo renders an autopilot workflow with both toolchains', (
   assert.match(y, /Bash\(node:\*\),Bash\(mvn:\*\),Bash\(npm:\*\),Bash\(npx:\*\),/)
   assert.ok(!/@\w+@/.test(y), 'no pack placeholder left')
 })
+
+test('tech strategy fills on a CRLF checkout too (Windows, core.autocrlf)', () => {
+  const crlf = TECH.replace(/\r?\n/g, '\r\n')
+  const { hits, root } = setup({ 'go.mod': 'module x\n\ngo 1.23\n' })
+  const out = fillTechStrategy(crlf, hits, root)
+  assert.ok(out.includes('| Language | Go 1.23 |'), 'stack table written')
+  assert.ok(!out.includes('_Not filled yet.'), 'placeholder replaced')
+})
