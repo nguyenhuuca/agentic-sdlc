@@ -79,4 +79,5 @@ v1 leaves out (later): swarm-research, presentation deck, threat-modeling, postm
   - ADR-0002..0006 + `docs/concepts/autopilot-design.md` ported with an origin note
   - Found while porting: a PR could have changed the helper that judges it; fixed with `SDLC_HELPER` / `SDLC_CONFIG_FILE`
 - [x] **P2** Core rules, new text: `core-directives`, `security`, `code-quality`, `debugging-protocol`, `agent-constraints`, `tech-strategy` (stack sections filled by packs). File names kept so ported skills still resolve; 14 KiB always loaded (assessment: 30 KiB). Tests: size limit, rule cross-references, push and security precedence present
-- [ ] **P3** Worker agents (new text)
+- [x] **P3** Worker agents, new text: explorer (haiku), builder, reviewer, research (sonnet), architect (opus); no `Agent` tool, `maxTurns` on each, reviewer read-only with the Evolve section and verdict contract. Tests on structure; live check: `claude -p --agent worker-reviewer` on a seeded SQL injection returned `revise` with it as `[B]` (CWE-89), $0.07
+- [ ] **P4** Core skills (new text), plus the artifact templates the agents and skills name (`templates/artifacts/`: adr, prd, pr_faq, spec, design_spec, plan, roadmap, postmortem, security_audit, system_design)
