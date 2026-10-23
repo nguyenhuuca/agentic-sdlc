@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply, buildConfig, detect, mergeSettings, planInstall, planUninstall, readManifest, summarize } from '../lib/install.mjs'
 import { doctor } from '../lib/doctor.mjs'
-import { parseArgs } from '../bin/agentic-sdlc.mjs'
+import { parseArgs } from '../lib/cli.mjs'
 
 const PAYLOAD = 'payload'
 const PACK = {
@@ -184,4 +184,17 @@ test('CLI: options, dry run writes nothing, no terminal needs --yes', () => {
   assert.ok(!existsSync(join(root, '.claude')))
   assert.equal(cli('init', '--yes').status, 0)
   assert.equal(cli('doctor').status, 0, cli('doctor').stdout)
+})
+
+test('the published package carries everything the CLI imports, and the bin always runs', () => {
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
+  for (const dir of ['bin', 'lib', 'payload', 'packs']) assert.ok(pkg.files.includes(dir), `package.json files misses ${dir}`)
+  for (const f of ['bin/agentic-sdlc.mjs', 'lib/cli.mjs', 'lib/install.mjs']) {
+    for (const [, spec] of readFileSync(f, 'utf8').matchAll(/from '(\.\.?\/[^']+)'/g)) {
+      const top = join(f, '..', spec).split(/[\\/]/)[0]
+      assert.ok(pkg.files.includes(top), `${f} imports ${spec} outside the published files`)
+    }
+  }
+  // npx reaches the bin through a .bin shim, so argv[1] is not this file: a main-module guard would skip main()
+  assert.ok(!/import\.meta\.url/.test(readFileSync('bin/agentic-sdlc.mjs', 'utf8')), 'bin must not guard main()')
 })

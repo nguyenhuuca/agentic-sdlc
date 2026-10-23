@@ -6,7 +6,7 @@
   "author": "nguyenhuuca",
   "type": "module",
   "bin": { "agentic-sdlc": "bin/agentic-sdlc.mjs" },
-  "files": ["bin", "payload", "packs", "LICENSE", "README.md"],
+  "files": ["bin", "lib", "payload", "packs", "LICENSE", "README.md"],
   "engines": { "node": ">=20" },
   "scripts": {
     "test": "node scripts/run-tests.mjs",
