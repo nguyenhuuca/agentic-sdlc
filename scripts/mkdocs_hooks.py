@@ -56,5 +56,26 @@ def normalize(markdown):
     return "\n".join(out)
 
 
+QUOTE = re.compile(r"^> ?")
+
+
+def normalize_quotes(markdown):
+    # lists inside a blockquote get the same treatment: normalize the quoted text, then quote it again
+    out, quoted, fence = [], [], None
+    for line in markdown.split("\n") + [""]:
+        fenced = FENCE.match(line)
+        if fenced and not quoted:
+            marker = fenced.group(2)
+            fence = None if fence and line.strip().startswith(fence) else (fence or marker)
+        if QUOTE.match(line) and not fence:
+            quoted.append(QUOTE.sub("", line, count=1))
+            continue
+        if quoted:
+            out.extend(("> " + q).rstrip() for q in normalize(normalize_quotes("\n".join(quoted))).split("\n"))
+            quoted = []
+        out.append(line)
+    return "\n".join(out[:-1])
+
+
 def on_page_markdown(markdown, **kwargs):
-    return normalize(markdown)
+    return normalize(normalize_quotes(markdown))
