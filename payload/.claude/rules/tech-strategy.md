@@ -2,7 +2,9 @@
 
 The project's chosen technologies. Suggest an alternative only when the owner asks for one; otherwise build with what is listed here, at the latest stable version unless a version is pinned.
 
-The installer fills the sections below from the stack packs it detected (`npx github:nguyenhuuca/agentic-sdlc init`). Edit them freely: `update` never overwrites a file you changed.
+The installer fills the sections below from the stack packs it detected (`npx github:nguyenhuuca/agentic-sdlc init`). The owner confirms them with `/welcome`, which the first session offers; edit them freely afterwards: `update` never overwrites a file you changed.
+
+<!-- sdlc:status unconfirmed -->
 
 ## Stack
 

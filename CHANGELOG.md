@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 (2026-10-23)
+
+- **First-session onboarding.** `init` marks `tech-strategy.md` unconfirmed. The session-start hook greets you and has Claude run the new `/welcome` skill before your first message: it shows the detected stack with evidence, looks for what build files do not say (database, migrations, lint, deployment, auth, observability), asks about the gaps with recommended choices and a "Not decided yet" option, writes the answers, and marks the file confirmed. Skip for now, or don't ask again. Never in CI or headless runs.
+- `doctor` reports the tech strategy status.
+
 ## 0.1.3 (2026-10-23)
 
 - Autopilot skill opens with a **Usage** table (request, plan file, `--auto-push`, `--auto`, headless). The flags were only in the frontmatter, which MkDocs does not render, and deep in the scope guard.

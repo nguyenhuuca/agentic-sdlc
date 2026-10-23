@@ -11,6 +11,7 @@ agentic-sdlc gives Claude Code a delivery process: what to write before coding, 
 | Skills | `.claude/skills/*/SKILL.md` | when you type `/<skill>` or a workflow calls it |
 | Hooks | `.claude/hooks/*.mjs`, wired in `.claude/settings.json` | on session start, before tool calls, on stop |
 | Project commands | `sdlc.config.json` | read by scripts and skills at run time |
+| Tech strategy | `.claude/rules/tech-strategy.md` | every session; confirmed by you with `/welcome` in the first session |
 | Scripts | `scripts/sdlc/` | autopilot gates, QA twice, metrics, Evolve, cost |
 | Templates | `templates/artifacts/` | when a PRD, ADR, spec or plan is written |
 

@@ -13,14 +13,14 @@ const PENDING = []
 
 test('the v1 skill set is present, each named after its directory', () => {
   const want = ['architect', 'autopilot', 'builder', 'code-check', 'evolve', 'land-the-plane', 'qa-engineer', 'scope', 'spec',
-    'swarm-execute', 'swarm-plan', 'swarm-review', 'task-resume', 'testing', 'writing-adrs']
+    'swarm-execute', 'swarm-plan', 'swarm-review', 'task-resume', 'testing', 'welcome', 'writing-adrs']
   assert.deepEqual([...skills.keys()].sort(), want)
   for (const [name, path] of skills) assert.ok(path.endsWith(`/${name}/SKILL.md`), path)
 })
 
 test('skills autopilot chains can be invoked by the model; user workflows cannot', () => {
   const flag = (n) => /^disable-model-invocation:\s*(\w+)/m.exec(read(n))?.[1]
-  for (const n of ['swarm-plan', 'swarm-review', 'swarm-execute', 'qa-engineer', 'land-the-plane']) assert.equal(flag(n), 'false', n)
+  for (const n of ['swarm-plan', 'swarm-review', 'swarm-execute', 'qa-engineer', 'land-the-plane', 'welcome']) assert.equal(flag(n), 'false', n)
   for (const n of ['scope', 'spec', 'code-check', 'builder', 'architect', 'autopilot', 'evolve']) assert.equal(flag(n), 'true', n)
 })
 

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { check as secretCheck, findSecret } from '../payload/.claude/hooks/secret-guard.mjs'
 import { check as commandCheck } from '../payload/.claude/hooks/command-guard.mjs'
-import { build, parseSession, report } from '../payload/.claude/hooks/session-start.mjs'
+import { build, parseSession, report, techStrategyStatus, WELCOME_GREETING } from '../payload/.claude/hooks/session-start.mjs'
 import { facts, reminders } from '../payload/.claude/hooks/stop-check.mjs'
 
 const HOOKS = 'payload/.claude/hooks'
@@ -115,4 +115,29 @@ test('hooks run as processes: JSON in, JSON out, bad input fails open', () => {
   const bad = run('command-guard.mjs', 'not json')
   assert.equal(bad.status, 0)
   assert.equal(bad.stdout, '')
+})
+
+test('session start offers /welcome while the tech strategy is unconfirmed, not after', () => {
+  const root = mkdtempSync(join(tmpdir(), 'wel-'))
+  const rule = (status) => {
+    execFileSync('node', ['-e', 'require("fs").mkdirSync(process.argv[1], { recursive: true })', join(root, '.claude/rules')])
+    writeFileSync(join(root, '.claude/rules/tech-strategy.md'), `# Tech Strategy\n\n<!-- sdlc:status ${status} -->\n`)
+  }
+  rule('unconfirmed')
+  const out = build({ source: 'startup' }, root, {})
+  assert.equal(techStrategyStatus(root), 'unconfirmed')
+  assert.equal(build({ source: 'startup' }, root, { GITHUB_ACTIONS: 'true' }), null, 'never in CI')
+  assert.equal(build({ source: 'startup' }, root, { CI: '1' }), null, 'never in CI')
+  assert.equal(out.systemMessage, WELCOME_GREETING)
+  assert.match(out.hookSpecificOutput.additionalContext, /invoke the `welcome` skill/)
+  const c = build({ source: 'compact' }, root, {})
+  assert.equal(c.systemMessage, undefined, 'no greeting after a compaction')
+  assert.ok(!/welcome/.test(c.hookSpecificOutput.additionalContext), 'not offered again after a compaction')
+  writeFileSync(join(root, 'session.txt'), 'task: t\nstatus: in_progress\nnext: x\n')
+  const both = build({ source: 'resume' }, root, {})
+  assert.match(both.systemMessage, /^Task in progress: t[\s\S]*👋 agentic-sdlc is installed/)
+  for (const s of ['confirmed 2026-10-23', 'skipped 2026-10-23']) {
+    rule(s)
+    assert.ok(!/welcome/.test(JSON.stringify(build({ source: 'startup' }, root, {}))), s)
+  }
 })

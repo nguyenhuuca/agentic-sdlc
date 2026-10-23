@@ -38,6 +38,17 @@ npx github:nguyenhuuca/agentic-sdlc doctor
 
 `doctor` checks Node, git, the hook wiring, `sdlc.config.json` (every component has gates and a QA runner), that every skill, agent and template named in the setup exists, and the `gh` and `claude` CLIs. Commit what `init` wrote, including `.agentic-sdlc/manifest.json`.
 
+## First Session: Confirm the Tech Strategy
+
+`.claude/rules/tech-strategy.md` is your golden path: every rule, skill and worker builds with what it lists. `init` fills it from the stack packs, but build files do not say everything (database, migrations, deployment, what is not allowed), so the first Claude Code session asks you to confirm it:
+
+1. On start you see: *"👋 agentic-sdlc is installed. The tech strategy (your golden path) is not confirmed yet…"*
+2. Whatever your first message is, Claude runs `/welcome` before it: it shows what was detected, with the file each claim comes from, and what it could not find.
+3. It asks about the gaps with a suggestion marked *Recommended* that fits your stack, a couple of alternatives, and **Not decided yet** when you do not know.
+4. It writes the answers into `tech-strategy.md` (and any gate changes into `sdlc.config.json`), marks it confirmed, and goes back to your first message.
+
+You can say **Skip for now** (asked again next session) or **Don't ask again** (`doctor` keeps a reminder). Run `/welcome --recheck` any time to revisit it. Headless runs (`claude -p`, CI) never stop for this.
+
 ## First Run
 
 Open Claude Code in the repository and try a small change:

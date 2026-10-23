@@ -38,22 +38,39 @@ export function report(s) {
   return lines.join('\n')
 }
 
-export function build(event, root) {
+// The tech strategy is the golden path; until the owner confirms it (or opts out) each new session offers /welcome
+export const WELCOME_GREETING = '👋 agentic-sdlc is installed. The tech strategy (your golden path) is not confirmed yet: Claude will offer a short check when you write your first message. You can skip it.'
+export const WELCOME_CONTEXT = 'agentic-sdlc onboarding: .claude/rules/tech-strategy.md is unconfirmed (marker `<!-- sdlc:status unconfirmed -->`). '
+  + 'Before working on the first message, whatever it is, invoke the `welcome` skill and follow it: greet, show the detected stack, ask the owner to confirm or choose, '
+  + 'and let them skip. Then continue with their message.'
+
+export function techStrategyStatus(root) {
+  const file = join(root, '.claude/rules/tech-strategy.md')
+  if (!existsSync(file)) return null
+  return /<!-- sdlc:status (\w+)/.exec(readFileSync(file, 'utf8'))?.[1] ?? null
+}
+
+// CI runs (headless autopilot, Evolve) have nobody to answer; onboarding there would only delay the job
+const inCi = (env) => Boolean(env.CI || env.GITHUB_ACTIONS)
+
+export function build(event, root, env = process.env) {
   const file = join(root, 'session.txt')
   const text = existsSync(file) ? readFileSync(file, 'utf8') : ''
   const r = report(parseSession(text))
   const notes = []
-  if (event?.source === 'compact') {
+  const compact = event?.source === 'compact'
+  if (compact) {
     notes.push('Context was just compacted: re-read session.txt, the active plan and any file before editing it (debugging-protocol.md, Stale Context Check).')
   }
+  const welcome = !compact && !inCi(env) && techStrategyStatus(root) === 'unconfirmed'
+  if (welcome) notes.push(WELCOME_CONTEXT)
   if (!r && !notes.length) return null
   const context = [r && `[session.txt]\n${r}`, ...notes].filter(Boolean).join('\n\n')
   const out = { hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: context } }
-  if (r) {
-    // after a compaction the person already saw the report at startup; only the model needs it again
-    if (event?.source !== 'compact') out.systemMessage = r
-    if (parseSession(text).status === 'done') out.hookSpecificOutput.additionalContext += '\nThe last task is done; the person has seen this report. Do not resume it.'
-  }
+  // after a compaction the person already saw the report at startup; only the model needs it again
+  const shown = [r && !compact ? r : null, welcome ? WELCOME_GREETING : null].filter(Boolean)
+  if (shown.length) out.systemMessage = shown.join('\n\n')
+  if (r && parseSession(text).status === 'done') out.hookSpecificOutput.additionalContext += '\nThe last task is done; the person has seen this report. Do not resume it.'
   return out
 }
 
