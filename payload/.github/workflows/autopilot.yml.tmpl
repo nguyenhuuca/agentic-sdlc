@@ -1,0 +1,235 @@
+# Headless /autopilot (ADR-0002). Gates live on GitHub:
+#   start  : owner adds label "autopilot" to an issue          -> plan job  (draft PR on autopilot/issue-<N>)
+#   gate 1 : owner comments "/approve" on that PR               -> build job (implement, review, QA x2, push to the PR branch)
+#            owner comments "/revise <notes>" on that PR        -> plan job again with the notes
+#   gate 2 : owner merges the PR (the merge is the push to {{deployBranch}}; the normal CI deploys it)
+# Opt-in labels on the issue (ADR-0003), added before or with "autopilot":
+#   autopilot:auto-merge : gate 2 is automatic (scripts/sdlc/autopilot-merge.sh merges when every check passes)
+#   autopilot:auto       : gates 1 and 2 are automatic (an approved plan dispatches the build job)
+# Security: only the repo owner can trigger (plus the action's own write-access check); untrusted text
+# (issue body, comments) is never interpolated into scripts or the prompt, only numbers and ids are passed;
+# Claude's steps see no secret besides CLAUDE_CODE_OAUTH_TOKEN. Only the auto-merge step sees
+# AUTOPILOT_MERGE_TOKEN, and it runs a script from {{deployBranch}}, not from the PR branch. Scripts that read
+# sdlc.config.json get a copy from {{deployBranch}} too (SDLC_HELPER, SDLC_CONFIG_FILE), so a PR cannot change its own limits.
+name: Autopilot (headless)
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Autopilot PR number to build (gate 1 already approved)
+        required: true
+        type: number
+
+# One autopilot run at a time, first come first served. Not a `concurrency` group: GitHub keeps only one
+# pending run per group and cancels it when a newer one queues, so with three issues labeled at once the
+# middle one was lost. The queue job waits instead until every older active run of this workflow is done.
+# Run ids grow with time, so the oldest waiting run always goes next and two runs never wait on each other.
+jobs:
+  queue:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.sender.login == github.repository_owner && (
+        (github.event_name == 'issues' && github.event.label.name == 'autopilot') ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+         (startsWith(github.event.comment.body, '/approve') || startsWith(github.event.comment.body, '/revise')))))
+    runs-on: ubuntu-latest
+    timeout-minutes: 340  # 5 runs of 60 min ahead; the hosted-runner limit is 360
+    permissions:
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ME: ${{ github.run_id }}
+    steps:
+      - name: Wait for older autopilot runs
+        run: |
+          # Runs whose jobs are all skipped (other labels, ordinary comments) finish in seconds and only delay a poll.
+          # A failed API call waits and asks again: it must neither fail the run nor let it skip the queue.
+          while :; do
+            if ! ahead=$(gh run list --workflow autopilot.yml --limit 100 --json databaseId,status --jq \
+              "[.[] | select(.databaseId < $ME and (.status | IN(\"queued\",\"in_progress\",\"waiting\",\"pending\",\"requested\")))] | map(.databaseId) | sort | join(\" \")"); then
+              echo "gh run list failed, retrying"; sleep 60; continue
+            fi
+            [ -z "$ahead" ] && break
+            echo "waiting for older runs: $ahead"
+            sleep 60
+          done
+
+  plan:
+    needs: queue
+    if: >-
+      github.event.sender.login == github.repository_owner && (
+        (github.event_name == 'issues' && github.event.label.name == 'autopilot') ||
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+         startsWith(github.event.comment.body, '/revise'))
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out the autopilot PR branch (revise only)
+        if: github.event_name == 'issue_comment'
+        run: |
+          head=$(gh pr view "$PR" --json headRefName --jq .headRefName)
+          case "$head" in autopilot/*) ;; *) echo "not an autopilot PR: $head"; exit 1 ;; esac
+          gh pr checkout "$PR"
+        env:
+          PR: ${{ github.event.issue.number }}
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          display_report: "false"  # full transcript is in the artifact; cost is a PR comment
+          # -p mode ends the session when the turn ends, so workers must run in the foreground (docs: sub-agents)
+          settings: '{"env":{"CLAUDE_CODE_DISABLE_BACKGROUND_TASKS":"1"}}'
+          prompt: >-
+            ${{ github.event_name == 'issues'
+              && format('/autopilot --headless plan --issue {0}', github.event.issue.number)
+              || format('/autopilot --headless plan --pr {0} --notes-comment {1}', github.event.issue.number, github.event.comment.id) }}
+          claude_args: >-
+            --max-turns 120
+            --allowedTools "Read,Write,Edit,Glob,Grep,Agent,Skill,TodoWrite,Bash(git:*),Bash(gh:*),Bash(node:*),Bash(cd:*),Bash(pwd:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(grep:*),Bash(sed:*),Bash(awk:*),Bash(sort:*),Bash(cut:*),Bash(tr:*),Bash(test:*),Bash(echo:*),Bash(printf:*),Bash(date:*),Bash(mkdir:*),Bash(cp:*),Bash(mv:*),Bash(basename:*),Bash(dirname:*)"
+
+      - name: Auto gate 1 (label autopilot:auto)
+        # A first plan only, not a /revise. The marker is written by the plan job only when plan review approved.
+        if: success() && github.event_name == 'issues'
+        run: |
+          gh issue view "$NUM" --json labels --jq '.labels[].name' | grep -qx 'autopilot:auto' || exit 0
+          pr=$(gh pr list --head "autopilot/issue-$NUM" --state open --json number --jq '.[0].number // empty')
+          [ -n "$pr" ] || { echo "no open autopilot PR for #$NUM"; exit 0; }
+          if ! gh pr view "$pr" --json body --jq .body | grep -qF '<!-- autopilot:plan-review=approve -->'; then
+            gh pr comment "$pr" --body "Gate 1 auto-approve skipped: plan review did not approve. Comment \`/approve\` or \`/revise <notes>\`."
+            exit 0
+          fi
+          gh workflow run autopilot.yml --ref {{deployBranch}} -f pr="$pr"
+          gh pr comment "$pr" --body "Gate 1 auto-approved by label \`autopilot:auto\` (ADR-0003): build job dispatched."
+        env:
+          NUM: ${{ github.event.issue.number }}
+      - name: Post the run cost and add it to the report
+        if: always() && steps.claude.outputs.execution_file != ''
+        # Runs the scripts from {{deployBranch}}, not the PR branch: a headless run must not change what runs here.
+        run: |
+          git show "origin/$BASE:scripts/sdlc/autopilot-cost.sh" > "$RUNNER_TEMP/cost.sh"
+          git show "origin/$BASE:scripts/sdlc/sdlc-config.mjs" > "$SDLC_HELPER"
+          git show "origin/$BASE:sdlc.config.json" > "$SDLC_CONFIG_FILE" 2>/dev/null || echo '{}' > "$SDLC_CONFIG_FILE"
+          bash "$RUNNER_TEMP/cost.sh" "$EXEC"
+        env:
+          EXEC: ${{ steps.claude.outputs.execution_file }}
+          BASE: {{deployBranch}}
+          SDLC_HELPER: ${{ runner.temp }}/sdlc-config.mjs
+          SDLC_CONFIG_FILE: ${{ runner.temp }}/sdlc.config.json
+          EVENT: ${{ github.event_name }}
+          NUM: ${{ github.event.issue.number }}
+          JOB: ${{ github.job }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Keep the Claude transcript for diagnosis
+        if: always() && steps.claude.outputs.execution_file != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: autopilot-${{ github.job }}-${{ github.run_id }}
+          path: ${{ steps.claude.outputs.execution_file }}
+          retention-days: 3
+  build:
+    needs: queue
+    # workflow_dispatch: sent by the plan job's auto gate 1 (github-actions[bot]) or by the owner by hand
+    if: >-
+      (github.event_name == 'workflow_dispatch' &&
+       (github.actor == github.repository_owner || github.actor == 'github-actions[bot]')) ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
+       github.event.sender.login == github.repository_owner &&
+       startsWith(github.event.comment.body, '/approve'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ inputs.pr || github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out the autopilot PR branch
+        run: |
+          head=$(gh pr view "$PR" --json headRefName --jq .headRefName)
+          case "$head" in autopilot/*) ;; *) echo "not an autopilot PR: $head"; exit 1 ;; esac
+          gh pr checkout "$PR"
+      - name: Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      # {{setupSteps}}
+      - id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          display_report: "false"  # full transcript is in the artifact; cost is a PR comment
+          # -p mode ends the session when the turn ends, so workers must run in the foreground (docs: sub-agents)
+          settings: '{"env":{"CLAUDE_CODE_DISABLE_BACKGROUND_TASKS":"1"}}'
+          # the auto gate 1 dispatch comes from github-actions[bot]; the job's own `if` already limits who can start it
+          allowed_bots: "github-actions[bot]"
+          prompt: ${{ format('/autopilot --headless build --pr {0}', inputs.pr || github.event.issue.number) }}
+          claude_args: >-
+            --max-turns 300
+            --allowedTools "Read,Write,Edit,Glob,Grep,Agent,Skill,TodoWrite,Bash(git:*),Bash(gh:*),Bash(node:*),{{allowedBash}}Bash(cd:*),Bash(pwd:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(grep:*),Bash(sed:*),Bash(awk:*),Bash(sort:*),Bash(cut:*),Bash(tr:*),Bash(test:*),Bash(echo:*),Bash(printf:*),Bash(date:*),Bash(mkdir:*),Bash(cp:*),Bash(mv:*),Bash(basename:*),Bash(dirname:*)"
+      - name: Post the run cost and add it to the report
+        if: always() && steps.claude.outputs.execution_file != ''
+        # Runs the scripts from {{deployBranch}}, not the PR branch: a headless run must not change what runs here.
+        run: |
+          git show "origin/$BASE:scripts/sdlc/autopilot-cost.sh" > "$RUNNER_TEMP/cost.sh"
+          git show "origin/$BASE:scripts/sdlc/sdlc-config.mjs" > "$SDLC_HELPER"
+          git show "origin/$BASE:sdlc.config.json" > "$SDLC_CONFIG_FILE" 2>/dev/null || echo '{}' > "$SDLC_CONFIG_FILE"
+          bash "$RUNNER_TEMP/cost.sh" "$EXEC"
+        env:
+          EXEC: ${{ steps.claude.outputs.execution_file }}
+          BASE: {{deployBranch}}
+          SDLC_HELPER: ${{ runner.temp }}/sdlc-config.mjs
+          SDLC_CONFIG_FILE: ${{ runner.temp }}/sdlc.config.json
+          EVENT: ${{ github.event_name }}
+          NUM: ${{ env.PR }}
+          JOB: ${{ github.job }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - name: Auto gate 2 (label autopilot:auto-merge or autopilot:auto)
+        # After the cost step, which may add a commit; the script re-checks every condition itself.
+        if: success()
+        run: |
+          git show "origin/$BASE:scripts/sdlc/autopilot-merge.sh" > "$RUNNER_TEMP/merge.sh"
+          git show "origin/$BASE:scripts/sdlc/sdlc-config.mjs" > "$SDLC_HELPER"
+          git show "origin/$BASE:sdlc.config.json" > "$SDLC_CONFIG_FILE" 2>/dev/null || echo '{}' > "$SDLC_CONFIG_FILE"
+          git fetch -q origin "$(gh pr view "$PR" --json headRefName --jq .headRefName)"
+          git checkout -q -f --detach FETCH_HEAD
+          bash "$RUNNER_TEMP/merge.sh" "$PR"
+        env:
+          MERGE_TOKEN: ${{ secrets.AUTOPILOT_MERGE_TOKEN }}
+          BASE: {{deployBranch}}
+          SDLC_HELPER: ${{ runner.temp }}/sdlc-config.mjs
+          SDLC_CONFIG_FILE: ${{ runner.temp }}/sdlc.config.json
+      - name: Keep the Claude transcript for diagnosis
+        if: always() && steps.claude.outputs.execution_file != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: autopilot-${{ github.job }}-${{ github.run_id }}
+          path: ${{ steps.claude.outputs.execution_file }}
+          retention-days: 3

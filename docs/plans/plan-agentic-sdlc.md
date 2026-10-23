@@ -66,3 +66,16 @@ v1 leaves out (later): swarm-research, presentation deck, threat-modeling, postm
 1. v1 skill set as listed in P4; the "later" list stays later.
 2. Keep the assessment names (`/swarm-plan`, `/swarm-review`, `/land-the-plane`, ...).
 3. Create the public GitHub repo after P1.
+
+## Progress
+
+- [x] **P0** Scaffold: README, MIT, ADR-0001, CI (node test on Linux + Windows, clean-room, shellcheck, actionlint), `check-clean-room.mjs`
+- [x] **P1** Owner-written parts ported:
+  - `sdlc.config.json` + `scripts/sdlc/sdlc-config.mjs` (commands, limits, protected paths; defaults can only be extended)
+  - autopilot skill + resources, `autopilot-{autopush-check,merge,cost}.sh`, `qa-twice.mjs` (any JUnit XML runner)
+  - Evolve skill, `evolve.mjs`, `agent-metrics.mjs` (same output as the original on assessment history), evals README
+  - `claude-cost.mjs` + pricing, statusline, session-file rule, `/task-resume`, sequence template
+  - workflows as `*.yml.tmpl` (`deployBranch`, `setupSteps`, `allowedBash`, `evolveCron`); unattended steps read trusted copies of the helper and config
+  - ADR-0002..0006 + `docs/concepts/autopilot-design.md` ported with an origin note
+  - Found while porting: a PR could have changed the helper that judges it; fixed with `SDLC_HELPER` / `SDLC_CONFIG_FILE`
+- [ ] **P2** Core rules (new text)

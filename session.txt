@@ -1,8 +1,7 @@
 task: agentic-sdlc v1 (clean-room SDLC framework)
-status: blocked
-progress: 5
-done: P-0 plan draft docs/plans/plan-agentic-sdlc.md
-next: owner answers 3 open questions in the plan; then P0 scaffold
+status: in_progress
+progress: 25
+done: P0 scaffold + clean-room CI 5c83818; P1 owner parts ported, 57 tests
+next: create GitHub repo nguyenhuuca/agentic-sdlc (public) + push; P2 core rules (new text)
 plan: docs/plans/plan-agentic-sdlc.md
-updated: 2026-10-23 09:53
-blocker: owner approval of plan + open questions
+updated: 2026-10-23 10:07
