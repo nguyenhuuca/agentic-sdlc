@@ -1,7 +1,7 @@
 task: agentic-sdlc v1 (clean-room SDLC framework)
 status: in_progress
-progress: 88
-done: P0 5c83818; P1 721a85d; P2 111696c; P3 1baac51; P4 ff718f8; P5 3de1c15; P6 3b8f390; P7 stack packs
-next: P8 docs (concepts, config reference, upgrade) + fresh-install round trip + tag v0.1.0
+progress: 97
+done: P0-P5; P6 3b8f390; P7 aac47cb; P8 docs + round trip (2 autopilot runs)
+next: owner: approve push; then tag v0.1.0 and check npx github:nguyenhuuca/agentic-sdlc
 plan: docs/plans/plan-agentic-sdlc.md
-updated: 2026-10-23 10:52
+updated: 2026-10-23 11:08

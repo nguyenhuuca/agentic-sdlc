@@ -1,6 +1,6 @@
 {
   "name": "agentic-sdlc",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "An installable Claude Code SDLC setup: planning flow, worker agents, review and QA gates, autopilot and a self-improvement loop.",
   "license": "MIT",
   "author": "nguyenhuuca",

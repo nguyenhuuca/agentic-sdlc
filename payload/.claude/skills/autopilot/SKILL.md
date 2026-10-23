@@ -167,6 +167,8 @@ Show the plan path, the task table, the advisories that were left open, and the 
 
 1. Run the full quality gates once, for the components the change touched: `git diff --name-only <base> | node scripts/sdlc/sdlc-config.mjs gates` prints them, one command per line. Run each; any red gate goes back to the QA loop.
 2. Commit with explicit pathspecs. Flip the `TASKS.md` lines to `[x]` with the hash and update `docs/tracking.md` when the plan status changes. **Every commit of the run** (local and headless) ends with the trailer `Autopilot-Run: <run id>` on its own line just before `Co-Authored-By:`; the run id is `<YYYY-MM-DD>-<slug>`, the same as the run-metrics file name. `scripts/sdlc/agent-metrics.mjs` uses it to link later `fix:` commits and reverts back to the run.
+   - **Before this commit**, check the ledger has a row for every stage that ran (plan, plan review, Gate 1, implement, code review, each QA run, fixes) and add any that are missing from this conversation.
+   - Write `session.txt` as it will be once the push succeeds (`status: done`, `progress: 100`, `next: -`) and commit it with the run. If Gate 2 then does not push, rewrite it as `blocked` with the reason in `blocker:` and commit that. Found in a test run: the run committed `progress: 90, next: Gate 2 push check`, which stayed on the remote after the push.
 3. **Gate 2:** show the commits, the gate results, the flaky list, the manual checks, and the ledger total. Ask with `AskUserQuestion`: **Push / Don't push yet**. There is no `--yes`.
    - **`--auto-push` or `--auto`:** run `bash scripts/sdlc/autopilot-autopush-check.sh`. Exit 0 → print the same content plus the script's line and push without asking; the ledger records `gate2 | auto`. Exit 1 → ask as above and show the script's reason. Reaching this step already needs a code-review `approve`, QA ×2 exit 0 and green gates.
 4. **After a push:**
@@ -176,7 +178,7 @@ Show the plan path, the task table, the advisories that were left open, and the 
 
 ## Ledger (D5)
 
-File: `scratchpad/autopilot/<YYYYMMDD-HHMM>-<slug>.md`, started from `resources/ledger.template.md`. Append one row per stage run (columns and rules are in the template).
+File: `scratchpad/autopilot/<YYYYMMDD-HHMM>-<slug>.md`, started from `resources/ledger.template.md`. Append one row per stage run (columns and rules are in the template), **right after that stage and before starting the next**; the Land stage checks for gaps.
 
 - `turns` / `tokens` / `min` come from each Agent result's usage. For a primary-path stage, add up the workers it spawned, plus the orchestrator's wall time.
 - **Cost is exact, not estimated.** At the end, run `node scripts/sdlc/claude-cost.mjs --from <run start ISO> --to <now ISO> --md`. It reads this session's transcripts (main + `subagents/`), dedupes requests and prices them with `scripts/sdlc/claude-pricing.json`. Paste its table into the report's `## Cost`. Label the figures as API list-price equivalent, not a bill. Do not estimate cost from the token totals in Agent results: they miss repeated cache reads. If a model is missing from the pricing file, the script warns; add the model from the pricing page.

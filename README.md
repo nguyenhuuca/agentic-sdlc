@@ -9,7 +9,9 @@ A Claude Code setup you install into your own repository. It gives the agent a s
 - **Evolve**: the agent reads its own quality signals (escaped defects, reverts, user bug reports), finds the stage that missed each one, and proposes one rule change proven by a seeded-bug eval.
 - **Session file**: `session.txt` keeps the task in flight, so a new session or another machine continues where work stopped.
 
-Status: under construction (v0.1.0 target). Plan: [`docs/plans/plan-agentic-sdlc.md`](docs/plans/plan-agentic-sdlc.md).
+Version 0.1.0 ([changelog](CHANGELOG.md)). Stack packs: Java (Maven), Node.js (npm), Python (pytest), Go; other stacks work with components written by hand in `sdlc.config.json`.
+
+Docs: [how it works](docs/concepts/overview.md) · [sdlc.config.json and packs](docs/config.md) · [autopilot and Evolve on GitHub](docs/headless.md) · [decisions](docs/adr/)
 
 ## Install
 
