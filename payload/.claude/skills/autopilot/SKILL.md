@@ -114,7 +114,7 @@ Every stage runs its **primary** path when the skill can be invoked, otherwise t
 | Implement / Fix | `swarm-execute` on the plan | `worker-builder` (focus `implementation`) |
 | Code review | `swarm-review` on the uncommitted diff | `worker-reviewer` (focus `quality`; add `security` when auth, input or SQL changed) |
 | Local QA specs | `qa-engineer` | `worker-builder` (focus `testing`) |
-| Land | `land-the-plane` | Orchestrator follows AGENTS.md "Landing the Plane" Mode B |
+| Land | `land-the-plane` Mode B | Orchestrator follows `.claude/skills/land-the-plane/SKILL.md` Mode B |
 
 Use the fallback when a skill call is refused, the skill is missing, or its `disable-model-invocation` is `true` again. The fallback prompt is:
 

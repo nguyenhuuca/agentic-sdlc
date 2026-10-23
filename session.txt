@@ -1,7 +1,7 @@
 task: agentic-sdlc v1 (clean-room SDLC framework)
 status: in_progress
-progress: 45
-done: P0 scaffold 5c83818; P1 owner parts 721a85d; P2 core rules 111696c; P3 worker agents
-next: P4 core skills + artifact templates (new text)
+progress: 60
+done: P0 5c83818; P1 721a85d; P2 111696c; P3 1baac51; P4 core skills + templates
+next: P5 hooks (secret guard, dangerous command guard, session start, stop validator), new code
 plan: docs/plans/plan-agentic-sdlc.md
-updated: 2026-10-23 10:18
+updated: 2026-10-23 10:26

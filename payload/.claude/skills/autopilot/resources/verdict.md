@@ -20,11 +20,12 @@ ADVISORY: <n>
 
 ## Mapping From `swarm-review`
 
-| `swarm-review` verdict | Block |
-|------------------------|-------|
-| ✅ Approved | `VERDICT: approve` |
-| ⚠️ Needs Work with only Medium/Low items | `VERDICT: approve`, items as `[A]` |
-| ⚠️ Needs Work with any Critical/High item, ❌ Request Changes | `VERDICT: revise`, those items as `[B]` |
+`swarm-review` already ends with this block. Its severity table decides the level of each line:
+
+| `swarm-review` severity | Block |
+|-------------------------|-------|
+| Critical, High | `[B]`; any one makes `VERDICT: revise` |
+| Medium, Low | `[A]`; with no `[B]`, `VERDICT: approve` |
 
 ## Parsing Rules (orchestrator)
 
