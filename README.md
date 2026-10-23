@@ -11,15 +11,31 @@ A Claude Code setup you install into your own repository. It gives the agent a s
 
 Status: under construction (v0.1.0 target). Plan: [`docs/plans/plan-agentic-sdlc.md`](docs/plans/plan-agentic-sdlc.md).
 
-## Install (planned)
+## Install
+
+Needs Node 20+ and git. In the root of your repository:
 
 ```bash
-npx github:nguyenhuuca/agentic-sdlc init --dry-run   # show what would change
-npx github:nguyenhuuca/agentic-sdlc init             # install
-npx github:nguyenhuuca/agentic-sdlc update           # later: update files you have not edited
+npx github:nguyenhuuca/agentic-sdlc init --dry-run      # list every file it would create, merge or leave alone
+npx github:nguyenhuuca/agentic-sdlc init                # install (asks first; --yes in scripts)
+npx github:nguyenhuuca/agentic-sdlc doctor              # check hooks, config, references and tools
 ```
 
-The installer detects your stack, writes the commands it found to `sdlc.config.json`, and never overwrites a file you changed.
+Options: `--packs java-maven,node` to choose stack packs instead of detecting them, `--with autopilot,evolve` to add the GitHub Actions workflows (they need the `CLAUDE_CODE_OAUTH_TOKEN` secret), `--target <dir>` for another directory.
+
+What it does to your repo:
+
+- **Creates** `.claude/` (rules, agents, skills, hooks), `scripts/sdlc/`, `templates/artifacts/`, `evals/`, and `sdlc.config.json` with the commands it detected. Review the config: it is yours and is never rewritten.
+- **Merges** `.claude/settings.json` (adds hooks and deny rules, keeps yours), a marked block in `CLAUDE.md`, and a few `.gitignore` lines.
+- **Never overwrites** a file that already exists or that you changed: the new version is written next to it as `<file>.sdlc-new`.
+- Records what it installed in `.agentic-sdlc/manifest.json` (commit it).
+
+Later:
+
+```bash
+npx github:nguyenhuuca/agentic-sdlc update      # refresh files you have not edited; .sdlc-new for the rest
+npx github:nguyenhuuca/agentic-sdlc uninstall   # remove unedited files and our hooks; deny rules stay
+```
 
 ## Origin
 
